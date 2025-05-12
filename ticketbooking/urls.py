@@ -7,3 +7,12 @@
 # print(l1)
 # l1.append(l2)
 # print(l1)
+# def show(**kwargs):
+#     print(kwargs['a'])
+# show(a=1,b=2)
+# a={"a":1,"b":2}
+# a.pop("a")
+# print(a)
+
+
+

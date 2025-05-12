@@ -15,20 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
-from ticketbooking.views import RegisterView,UserListView,BookTicketView,CancelTicketView,TicketStatusView,TrainCreateView,TrainSearchAPIView
+from django.urls import path
+from ticketbooking.views import UserRegistrationView, UserListView, BookTicketView, CancelTicketView, TicketStatusView, SearchTrainView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/', RegisterView.as_view()),
+    path('register/', UserRegistrationView.as_view(), name='user-register'),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('users/', UserListView.as_view()),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('bookticket/', BookTicketView.as_view()),
-    path('cancelticket/<int:pnr_number>/', CancelTicketView.as_view(), name='cancel-ticket'),
+    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('users/', UserListView.as_view(), name='user-view'),
+    path('book/', BookTicketView.as_view()),
+    path('cancel/<int:pnr_number>/', CancelTicketView.as_view(), name='cancel-ticket'),
     path('ticketstatus/<str:pnr_number>/', TicketStatusView.as_view(), name='ticket-status'),
-    path('traincreate/', TrainCreateView.as_view(), name='traincrate'),
-    path('trainsearch/', TrainSearchAPIView.as_view(), name='train-search'),
-
+    path('trainsearch/', SearchTrainView.as_view(), name='search-trains'),
 ]
 
