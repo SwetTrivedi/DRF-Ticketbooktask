@@ -48,37 +48,43 @@ class Train(models.Model):
     def __str__(self):
         return f"{self.train_name} ({self.train_number})"
     
-    def get_fare(self, seat_class, booking_type="Normal", boarding_station=None):
-        if boarding_station is None:
-            boarding_station = self.source_station
-        fare_distance = self.calculate_distance(boarding_station)
+
+    def calculate_distance(self, boarding_station, destination_station):
+        station_order = self.get_station_order()
+
+        print(f"Station order: {station_order}")
+        print(f"Boarding station: {boarding_station}, Destination station: {destination_station}")
+
+        if boarding_station not in station_order or destination_station not in station_order:
+            raise ValueError(f"Invalid boarding or destination station. Boarding: {boarding_station}, Destination: {destination_station}")
+
+        start_index = station_order.index(boarding_station)
+        end_index = station_order.index(destination_station)
+
+        if start_index >= end_index:
+            raise ValueError("Destination must come after boarding station")
+
+        # Equal segment assumption
+        total_segments = len(station_order) - 1
+        covered_segments = end_index - start_index
+
+        segment_distance = self.total_distance / total_segments
+        return round(segment_distance * covered_segments, 2)
+
+    def get_fare(self, seat_class, booking_type="Normal", boarding_station=None, destination_station=None):
+        if not boarding_station or not destination_station:
+            return None
+
+        fare_distance = self.calculate_distance(boarding_station, destination_station)
         base_fare = self.get_base_fare(seat_class, booking_type)
         if base_fare is None:
             return None
-        return base_fare * fare_distance
-
-    def calculate_distance(self, boarding_station):
-        if boarding_station == self.source_station:
-            return self.total_distance
-        elif boarding_station in self.intermediate_stops.split(','):
-            return self.total_distance / 2  
-        elif boarding_station == self.destination_station:
-            return 0  
-        else:
-            raise ValueError(f"Invalid boarding station: {boarding_station}")
+        return round(base_fare * fare_distance, 2)
 
     def get_base_fare(self, seat_class, booking_type="Normal"):
         if booking_type == "Tatkal":
-            return self.fare_tatkal.get(seat_class, None)
-        return self.fare_normal.get(seat_class, None)
-    
-    
-    def save(self, *args, **kwargs):
-        if self._state.adding: 
-            self.available_seats_sleeper = self.total_seats_sleeper
-            self.available_seats_ac1 = self.total_seats_ac1
-            self.available_seats_ac2 = self.total_seats_ac2
-        super().save(*args, **kwargs)
+            return self.fare_tatkal.get(seat_class)
+        return self.fare_normal.get(seat_class)
     
 class Booking(models.Model):
     BOOKING_TYPE_CHOICES = [
@@ -87,6 +93,7 @@ class Booking(models.Model):
     ]
 
     train = models.ForeignKey(Train, on_delete=models.CASCADE, related_name="bookings")
+    # name=models.ForeignKey(Train,on_delete=models.CASCADE)
     pnr = models.CharField(max_length=8, default=generate_pnr, editable=False)
     passenger_name = models.CharField(max_length=100)
     passenger_age = models.PositiveIntegerField()
@@ -103,3 +110,5 @@ class Booking(models.Model):
     
     def __str__(self):
         return f"{self.passenger_name} -PNR{self.pnr}"
+    # def __str__(self):
+    #     return f"{self.name}"
