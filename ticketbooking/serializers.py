@@ -4,8 +4,8 @@ from .models import Train, Booking
 from decimal import Decimal
 import logging
 
-logger = logging.getLogger(__name__)
-User = get_user_model()
+logger = logging.getLogger(__name__)   # Set up a logger
+User = get_user_model()  # Get the current custom user model
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'password']
 
-    def create(self, validated_data):
+    def create(self, validated_data):   # When a new user is created
         try:
             user = User.objects.create_user(
                 username=validated_data['username'],
@@ -40,10 +40,10 @@ class TrainSerializer(serializers.ModelSerializer):
         model = Train
         fields = '__all__'
 
-    def validate(self, data):
+    def validate(self, data):    # Check for custom validations
         try:
-            source = data.get('source_station', '').strip().lower()
-            dest = data.get('destination_station', '').strip().lower()
+            source = data.get('source_station', '').strip().lower()  # Get and clean source station
+            dest = data.get('destination_station', '').strip().lower() # Get and clean destination station
 
             if source == dest:
                 raise serializers.ValidationError("Source and destination stations cannot be the same.")
@@ -69,8 +69,7 @@ class TrainSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     train_number = serializers.CharField(write_only=True)
     fare = serializers.DecimalField(max_digits=8, decimal_places=2, read_only=True)
-    pnr = serializers.CharField(read_only=True)
-    # train_name=serializers.ReadOnlyField(source=Train.train_name)
+    # pnr = serializers.CharField(read_only=True)
 
     class Meta:
         model = Booking
@@ -79,9 +78,10 @@ class BookingSerializer(serializers.ModelSerializer):
             'seat_class', 'booking_type', 'boarding_station', 'destination_station',
             'fare', 'pnr', 'status', 'seat_number'
         ]
-        read_only_fields = ['fare', 'pnr', 'status','seat_number']
+        read_only_fields = ['fare','status','seat_number']   # These fields are set automatically
 
-    def validate(self, attrs):
+    def validate(self, attrs):   
+        # Get all required fields from input
         try:
             train_number = attrs.get('train_number')
             seat_class = attrs.get('seat_class')
@@ -106,7 +106,7 @@ class BookingSerializer(serializers.ModelSerializer):
             logger.error(f"Validation error in BookingSerializer: {e}")
             raise serializers.ValidationError("Error validating booking.")
 
-    def create(self, validated_data):
+    def create(self, validated_data):  #This runs when a new booking is made
         try:
             validated_data.pop('train_number', None)
             train = validated_data['train']
@@ -133,6 +133,9 @@ class BookingSerializer(serializers.ModelSerializer):
 
             train.save()
             validated_data['seat_number'] = seat_number
+            pnr = self.initial_data.get("pnr")
+            if pnr:
+                validated_data["pnr"]=pnr
             return Booking.objects.create(**validated_data)
 
         except serializers.ValidationError as ve:

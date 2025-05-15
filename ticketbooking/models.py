@@ -3,19 +3,19 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils import timezone
-class CustomUser(AbstractUser):
+class CustomUser(AbstractUser):    ## Custom user model which extends Django's default AbstractUser
     is_normal_user= models.BooleanField(default=True)  
 
     def __str__(self):
-        return self.username
+        return self.username  #shows the username
 
 import random
 import string
 
-def generate_pnr():
+def generate_pnr():    # function to generate 8-digit random PNR number
     return ''.join(random.choices(string.digits, k=8))
 
-def get_current_date():
+def get_current_date():  # Get the current date 
     return timezone.now().date()
 
 class Train(models.Model):
@@ -42,26 +42,26 @@ class Train(models.Model):
     train_status = models.BooleanField(default=True)  
     duration = models.DurationField()
 
-    def get_station_order(self):
+    def get_station_order(self):          # Returns a list of all stations in order (source => stops => destination)
         return [self.source_station] + self.intermediate_stops + [self.destination_station]
 
-    def __str__(self):
+    def __str__(self):   # Shows train name and number
         return f"{self.train_name} ({self.train_number})"
     
 
-    def calculate_distance(self, boarding_station, destination_station):
+    def calculate_distance(self, boarding_station, destination_station):  # Calculate distance between any two stations
         station_order = self.get_station_order()
 
         print(f"Station order: {station_order}")
         print(f"Boarding station: {boarding_station}, Destination station: {destination_station}")
 
-        if boarding_station not in station_order or destination_station not in station_order:
+        if boarding_station not in station_order or destination_station not in station_order:  # Check if both stations are valid
             raise ValueError(f"Invalid boarding or destination station. Boarding: {boarding_station}, Destination: {destination_station}")
 
         start_index = station_order.index(boarding_station)
         end_index = station_order.index(destination_station)
 
-        if start_index >= end_index:
+        if start_index >= end_index:  # Destination must come after boarding station
             raise ValueError("Destination must come after boarding station")
 
         # Equal segment assumption
@@ -71,7 +71,7 @@ class Train(models.Model):
         segment_distance = self.total_distance / total_segments
         return round(segment_distance * covered_segments, 2)
 
-    def get_fare(self, seat_class, booking_type="Normal", boarding_station=None, destination_station=None):
+    def get_fare(self, seat_class, booking_type="Normal", boarding_station=None, destination_station=None): # Get fare between two stations for selected seat class and booking type
         if not boarding_station or not destination_station:
             return None
 
@@ -81,12 +81,12 @@ class Train(models.Model):
             return None
         return round(base_fare * fare_distance, 2)
 
-    def get_base_fare(self, seat_class, booking_type="Normal"):
+    def get_base_fare(self, seat_class, booking_type="Normal"):    # Get base fare rate from normal or tatkal fare
         if booking_type == "Tatkal":
             return self.fare_tatkal.get(seat_class)
         return self.fare_normal.get(seat_class)
     
-class Booking(models.Model):
+class Booking(models.Model):   # Booking model to store individual passenger bookings
     BOOKING_TYPE_CHOICES = [
         ("Normal", "Normal"),
         ("Tatkal", "Tatkal")
@@ -110,5 +110,3 @@ class Booking(models.Model):
     
     def __str__(self):
         return f"{self.passenger_name} -PNR{self.pnr}"
-    # def __str__(self):
-    #     return f"{self.name}"

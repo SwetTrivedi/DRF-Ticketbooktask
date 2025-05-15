@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from ticketbooking.views import RegisterUserView,NormalUsersListView,TrainViewSet,BookTicketView
+from ticketbooking.views import RegisterUserView,NormalUsersListView,TrainViewSet,BookTicketView,QueryAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
@@ -29,5 +29,6 @@ urlpatterns = [
     path('normal-users/', NormalUsersListView.as_view(), name='normal-users-list'),
     path('api/', include(router.urls)), 
     path('book/', BookTicketView.as_view(), name='book-ticket'),
+    path('ormtask/',QueryAPIView.as_view(),name='ormtask')
 ]
 
